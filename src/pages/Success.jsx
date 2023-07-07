@@ -30,10 +30,9 @@ const Container = styled.section`
 const Success = () => {
   const [userCart, setUserCart] = useState(null);
   const location = useLocation();
-  // const data = location.state.stripeData;
+  const data = location.state.stripeData;
   const cart = useSelector((state) => state.cart);
-  // const cartId = location.state.cartId;
-  const cartId = 1;
+  const cartId = location.state.cartId;
   const dispatch = useDispatch();
 
   const currentUser = useSelector((state) => state.user.currentUser);
@@ -53,7 +52,7 @@ const handleClick = async () => {
   useEffect(() => {
     const createOrder = async () => {
       const res = await makeOrder(
-        // data.billing_details.address,
+        data.billing_details.address,
         'bvuiguihg',
         cartId,
         cart.total,
@@ -70,9 +69,9 @@ const handleClick = async () => {
 
     // Se verifica si el ID del pedido es null antes de crear la orden
     if (orderId === null) {
-      /*data &&*/ createOrder();
+      data && createOrder();
     }
-  }, [cart, cartId, /*data*/, currentUser, orderId]);
+  }, [cart, cartId, data, currentUser, orderId]);
 
   return (
     <Container
@@ -88,6 +87,7 @@ const handleClick = async () => {
         <Button text={'Keep Buying'} />
       </Link></div> ) : 
       ( <div>{ msgFail}
+      {/* Si el mensaje es de error vuelve a cargar para el envío de una nueva solicitud, con el boton "Try Again" */}
       <StripeCheckout
           name="Cierva Design"
           image={logo}
@@ -96,8 +96,7 @@ const handleClick = async () => {
           description={`Your total is $${cart.total}`}
           amount={cart.total * 100}
           token={onToken}
-          //stripeKey={KEY}
-          stripeKey='ggg'
+          stripeKey={KEY}
         >
           <Button
             text={'Try Again'}
@@ -106,8 +105,7 @@ const handleClick = async () => {
           />
         </StripeCheckout>
       </div>
-        )}
-      
+        )}      
     </Container>
   );
 };
