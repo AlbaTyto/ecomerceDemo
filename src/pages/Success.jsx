@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
+import logo from '../assests/logo.png';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { handleSuccess } from '../utils/toast';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import { makeOrder } from '../utils/endpointsLogic';
+import { addToCart, makeOrder, payment } from '../utils/endpointsLogic';
 import { clearCart } from '../redux/cartRedux';
 import Button from '../components/Button';
+import StripeCheckout from 'react-stripe-checkout';
+const KEY = process.env.REACT_APP_STRIPE;
 
 const Container = styled.section`
   width: 100vw;
@@ -25,10 +28,12 @@ const Container = styled.section`
   justify-content: center;
 `;
 const Success = () => {
+  const [userCart, setUserCart] = useState(null);
   const location = useLocation();
-  const data = location.state.stripeData;
+  // const data = location.state.stripeData;
   const cart = useSelector((state) => state.cart);
-  const cartId = location.state.cartId;
+  // const cartId = location.state.cartId;
+  const cartId = 1;
   const dispatch = useDispatch();
 
   const currentUser = useSelector((state) => state.user.currentUser);
@@ -36,10 +41,20 @@ const Success = () => {
   const msgSuccess = `Order has been created successfully. Your order number is ${orderId}`;
   const msgFail = `Something went wrong, your order was not created yet...`;
 
+  const [stripeToken, setStripeToken] = useState(null);
+const handleClick = async () => {
+    await addToCart(cart, setUserCart);
+    await payment(stripeToken.id, cart.total, history, userCart);
+  };
+  const onToken = (token) => {
+    setStripeToken(token);
+  };
+
   useEffect(() => {
     const createOrder = async () => {
       const res = await makeOrder(
-        data.billing_details.address,
+        // data.billing_details.address,
+        'bvuiguihg',
         cartId,
         cart.total,
       );
@@ -55,9 +70,9 @@ const Success = () => {
 
     // Se verifica si el ID del pedido es null antes de crear la orden
     if (orderId === null) {
-      data && createOrder();
+      /*data &&*/ createOrder();
     }
-  }, [cart, cartId, data, currentUser, orderId]);
+  }, [cart, cartId, /*data*/, currentUser, orderId]);
 
   return (
     <Container
@@ -66,11 +81,33 @@ const Success = () => {
       aria-label={orderId ? msgSuccess : msgFail}
     >
       {/* Se muestra el mensaje de éxito o error dependiendo del estado del ID del pedido */}
-      {orderId ? msgSuccess : msgFail}
       {/* componente Button  */}
+      { orderId ? 
+      ( <div>{msgSuccess}
       <Link to="/" role="link" style={{ textDecoration: 'none' }}>
         <Button text={'Keep Buying'} />
-      </Link>
+      </Link></div> ) : 
+      ( <div>{ msgFail}
+      <StripeCheckout
+          name="Cierva Design"
+          image={logo}
+          billingAddress
+          shippingAddress
+          description={`Your total is $${cart.total}`}
+          amount={cart.total * 100}
+          token={onToken}
+          //stripeKey={KEY}
+          stripeKey='ggg'
+        >
+          <Button
+            text={'Try Again'}
+            onClick={handleClick}
+            onKeyUp={handleClick}
+          />
+        </StripeCheckout>
+      </div>
+        )}
+      
     </Container>
   );
 };
